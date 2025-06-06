@@ -19,6 +19,33 @@ export default function SignupPage() {
       alert("Passwords do not match");
       return;
     }
+    try {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: form.name,
+      email: form.email,
+      password: form.password,
+    }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.detail || "Signup failed");
+  }
+
+  alert("Account created successfully! Please check your email or login.");
+  // Optionally redirect to login:
+  window.location.href = "/login";
+
+} catch (err: any) {
+  alert(err.message || "Something went wrong");
+}
+
     // Call signup function here
   };
 

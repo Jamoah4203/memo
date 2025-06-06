@@ -12,7 +12,7 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post("/auth/password-reset/", { email });
+      await axios.post("/auth/register/", { email });
       alert("Reset link sent. Check your email.");
     } catch (err) {
       console.error("Failed to send reset email", err);
