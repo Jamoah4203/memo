@@ -1,41 +1,62 @@
 import axios from "axios";
 
+// Use a fallback for dev only (never ship localhost in production!)
+const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5137";
+
 const instance = axios.create({
-  baseURL: "http://localhost:8000/api",
-  withCredentials: true,
+  baseURL: `${baseURL}/api/`,
+  withCredentials: true, // Optional: depends on if you're doing cookie auth
 });
 
-// Request interceptor
+// 🛡️ Attach access token if present
 instance.interceptors.request.use((config) => {
-  const access = localStorage.getItem("access");
-  if (access) config.headers.Authorization = `Bearer ${access}`;
+  if (typeof window !== "undefined") {
+    const access = localStorage.getItem("access");
+    if (access) {
+      config.headers.Authorization = `Bearer ${access}`;
+    }
+  }
   return config;
 });
 
-// Response interceptor (auto-refresh on 401)
+// 🔁 Auto-refresh tokens on 401
 instance.interceptors.response.use(
-  (res) => res,
-  async (err) => {
-    const original = err.config;
-    if (err.response?.status === 401 && !original._retry) {
-      original._retry = true;
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
 
-      try {
-        const refresh = localStorage.getItem("refresh");
-        const res = await instance.post("/auth/refresh-token", { refresh });
-        const access = res.data.access;
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      typeof window !== "undefined"
+    ) {
+      originalRequest._retry = true;
 
-        localStorage.setItem("access", access);
-        original.headers.Authorization = `Bearer ${access}`;
+      const refresh = localStorage.getItem("refresh");
 
-        return instance(original);
-      } catch (refreshErr) {
+      if (refresh) {
+        try {
+          const res = await instance.post("/auth/refresh-token", { refresh });
+          const newAccess = res.data.access;
+
+          localStorage.setItem("access", newAccess);
+          originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+
+          return instance(originalRequest);
+        } catch (refreshErr) {
+          localStorage.clear();
+          window.location.href = "/login"; // Redirect user to login
+          return Promise.reject(refreshErr);
+        }
+      } else {
+        // No refresh token, force logout
         localStorage.clear();
-        window.location.href = "/";
-        return Promise.reject(refreshErr);
+        window.location.href = "/login";
+        return Promise.reject(error);
       }
     }
-    return Promise.reject(err);
+
+    return Promise.reject(error);
   }
 );
 

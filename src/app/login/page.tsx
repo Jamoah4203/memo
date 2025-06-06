@@ -13,14 +13,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
     try {
       await login(email, password);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setError(err?.response?.data?.detail || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -32,7 +35,14 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-md bg-white rounded-2xl p-8 shadow-2xl space-y-6 text-gray-900"
       >
-        <h2 className="text-2xl font-bold text-center text-white-600">Login</h2>
+        <h2 className="text-2xl font-bold text-center text-blue-600">Login</h2>
+
+        {/* Error */}
+        {error && (
+          <div className="text-red-500 text-sm text-center border border-red-200 p-2 rounded bg-red-50">
+            {error}
+          </div>
+        )}
 
         {/* Email */}
         <div className="space-y-2">
@@ -73,7 +83,7 @@ export default function LoginPage() {
         {/* Submit Button */}
         <Button
           type="submit"
-          className="w-full bg-blue-600 text-white hover:bg-[#eab308]"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
         >
           {loading ? <Loader2 className="animate-spin" size={20} /> : "Sign In"}
         </Button>
@@ -81,7 +91,7 @@ export default function LoginPage() {
         {/* Forgot + Signup Links */}
         <div className="text-center text-sm text-gray-600 space-y-1">
           <p>
-            Forgot {" "}
+            Forgot{" "}
             <Link href="/forgot-password" className="text-blue-600 hover:underline">
               Username / Password?
             </Link>
