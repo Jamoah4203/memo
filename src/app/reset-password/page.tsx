@@ -1,10 +1,19 @@
-export const dynamic = 'force-dynamic'; // Must be first
+// app/reset-password/page.tsx
+import { Suspense } from 'react'
+// Update the import path if the component is located elsewhere, for example:
+// Update the import path to match the actual file location and filename (case-sensitive)
+import ResetPasswordClient from '../../components/reset-password/ResetPasswordForm'
+// If the file is named 'resetPasswordClient.tsx' or similar, update the import accordingly:
+// import ResetPasswordClient from '../../components/reset-password/resetPasswordClient'
 
-// Update the import path below to the correct location of ResetPasswordForm
-import ResetPasswordForm from '../../components/reset-password/ResetPasswordForm';
+export const dynamic = 'force-dynamic'
 
-export default function ResetPasswordPage({ searchParams }: { searchParams: { token?: string } }) {
-  const token = searchParams.token || '';
-
-  return <ResetPasswordForm token={token} />;
+export default function ResetPasswordPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-blue-600 p-4">
+      <Suspense fallback={<div>Loading reset form...</div>}>
+        <ResetPasswordClient />
+      </Suspense>
+    </div>
+  )
 }

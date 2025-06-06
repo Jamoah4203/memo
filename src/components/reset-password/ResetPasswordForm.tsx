@@ -1,63 +1,64 @@
-"use client";
+'use client'
 
-import { useState } from 'react';
-import axios from 'axios';
+import { useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import axios from 'axios'
 
-export default function ResetPasswordForm({ token }: { token: string }) {
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+export default function ResetPasswordClient() {
+  const searchParams = useSearchParams()
+  const token = searchParams.get('token') || ''
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault()
     if (password !== confirm) {
-      setMessage("Passwords don't match");
-      return;
+      alert('Passwords do not match')
+      return
     }
-    if (!token) {
-      setMessage("Invalid or missing reset token");
-      return;
-    }
-    setLoading(true);
-    setMessage('');
+
     try {
-      await axios.post('/auth/password-reset/', {
+      await axios.post('/auth/password-reset/confirm/', {
         token,
         password,
         confirm_password: confirm,
-      });
-      setMessage('Password updated successfully! You can now login.');
-    } catch (error) {
-      setMessage('Failed to reset password. Try again.');
-    } finally {
-      setLoading(false);
+      })
+      alert('Password updated successfully')
+    } catch (err) {
+      console.error('Reset failed', err)
+      alert('Something went wrong while resetting password.')
     }
-  };
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-md mx-auto p-6 bg-white rounded shadow space-y-4">
-      <h2 className="text-xl font-bold text-center">Reset Password</h2>
-      <input
+    <form
+      onSubmit={handleReset}
+      className="bg-white p-8 rounded-xl max-w-md w-full space-y-6 shadow-2xl"
+    >
+      <h2 className="text-center text-2xl font-bold text-blue-600">
+        Reset Password
+      </h2>
+
+      <Input
         type="password"
         placeholder="New Password"
         value={password}
-        onChange={e => setPassword(e.target.value)}
+        onChange={(e) => setPassword(e.target.value)}
         required
-        className="input"
       />
-      <input
+      <Input
         type="password"
         placeholder="Confirm Password"
         value={confirm}
-        onChange={e => setConfirm(e.target.value)}
+        onChange={(e) => setConfirm(e.target.value)}
         required
-        className="input"
       />
-      <button type="submit" disabled={loading} className="btn-primary w-full">
-        {loading ? 'Updating...' : 'Update Password'}
-      </button>
-      {message && <p className="text-center mt-2 text-red-500">{message}</p>}
+
+      <Button type="submit" className="w-full bg-[#facc15] text-blue-600">
+        Update Password
+      </Button>
     </form>
-  );
+  )
 }
