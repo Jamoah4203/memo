@@ -4,21 +4,35 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
-  //const token = searchParams.get("token");
+  const token = searchParams.get("token");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
 
-  const handleReset = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== confirm) {
-      alert("Passwords do not match");
-      return;
-    }
-    // Submit password reset to backend with token
-  };
+
+const handleReset = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (password !== confirm) {
+    alert("Passwords do not match");
+    return;
+  }
+
+  try {
+    await axios.post("/auth/password-reset/confirm/", {
+      token,
+      password,
+      confirm_password: confirm,
+    });
+    alert("Password updated successfully");
+  } catch (err) {
+    console.error("Failed to reset password", err);
+    alert("Something went wrong while resetting password.");
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-600 p-4">

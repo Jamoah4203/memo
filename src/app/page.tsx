@@ -20,7 +20,7 @@ export default function LandingPage() {
       <main className="flex-1 flex items-center justify-center px-4 text-center">
         <div className="max-w-2xl space-y-6">
           <h2 className="text-4xl sm:text-5xl font-bold leading-tight">
-            All Your Memos. Organized. 🔐
+            All Your Memos Organized. 🔐
           </h2>
           <p className="text-lg text-gray-300">
             Centralized memo management — secure, fast, and built for modern teams.
