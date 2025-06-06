@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  //const token = searchParams.get("token");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
 
