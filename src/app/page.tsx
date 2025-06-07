@@ -5,12 +5,15 @@ import { Button } from "@/components/ui/button";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen blue-600 text-white flex flex-col">
+    <div className="min-h-screen bg-blue-600 text-white flex flex-col">
       {/* Header */}
-      <header className="px-6 py-4 flex justify-between items-center shadow-md blue-600">
+      <header className="px-6 py-4 flex justify-between items-center shadow-md bg-blue-600">
         <h1 className="text-xl font-bold tracking-widest text-yellow-400">MEMO APP</h1>
         <Link href="/login">
-          <Button variant="secondary" className="bg-yellow-400 text-slate-900 hover:bg-yellow-300">
+          <Button
+            variant="secondary"
+            className="bg-yellow-400 text-slate-900 hover:bg-yellow-300"
+          >
             Login
           </Button>
         </Link>
@@ -22,7 +25,7 @@ export default function LandingPage() {
           <h2 className="text-4xl sm:text-5xl font-bold leading-tight">
             All Your Memos Organized. 🔐
           </h2>
-          <p className="text-lg text-gray-300">
+          <p className="text-lg text-grey-200">
             Centralized memo management — secure, fast, and built for modern teams.
           </p>
           <Link href="/login">
@@ -34,7 +37,7 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="text-sm text-gray-400 py-6 text-center">
+      <footer className="text-sm text-grey-900 py-6 text-center">
         © {new Date().getFullYear()} JayTec. All rights reserved.
       </footer>
     </div>

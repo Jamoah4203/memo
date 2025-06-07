@@ -2,28 +2,41 @@
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Eye, EyeOff } from "lucide-react";
-import Link from "next/link";
+import { Loader2, Eye, EyeOff, CheckCircle } from "lucide-react";
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState({ error: "", success: false });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.id]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setFeedback({ error: "", success: false });
+
     try {
-      await login(email, password);
+      await login(form.email, form.password);
+      setFeedback({ error: "", success: true });
+
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1000);
     } catch (err: any) {
-      console.error(err);
-      setError(err?.response?.data?.detail || "Login failed. Please try again.");
+      const msg =
+        err?.response?.data?.detail || err?.message || "Login failed. Try again.";
+      setFeedback({ error: msg, success: false });
     } finally {
       setLoading(false);
     }
@@ -37,41 +50,51 @@ export default function LoginPage() {
       >
         <h2 className="text-2xl font-bold text-center text-blue-600">Login</h2>
 
-        {/* Error */}
-        {error && (
+        {feedback.success && (
+          <div className="text-green-600 text-sm text-center border border-green-200 p-2 rounded bg-green-50 flex items-center justify-center gap-2">
+            <CheckCircle className="text-green-500" size={18} />
+            Login successful! Redirecting...
+          </div>
+        )}
+
+        {feedback.error && (
           <div className="text-red-500 text-sm text-center border border-red-200 p-2 rounded bg-red-50">
-            {error}
+            {feedback.error}
           </div>
         )}
 
         {/* Email */}
         <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium">Email</label>
+          <label htmlFor="email" className="text-sm font-medium">
+            Email
+          </label>
           <Input
-            type="email"
             id="email"
+            type="email"
             placeholder="Enter Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={form.email}
+            onChange={handleChange}
             required
           />
         </div>
 
-        {/* Password + Show/Hide */}
+        {/* Password */}
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium">Password</label>
+          <label htmlFor="password" className="text-sm font-medium">
+            Password
+          </label>
           <div className="relative">
             <Input
-              type={showPassword ? "text" : "password"}
               id="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Enter Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={form.password}
+              onChange={handleChange}
               required
             />
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={() => setShowPassword((prev) => !prev)}
               className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700"
               tabIndex={-1}
             >
@@ -80,15 +103,14 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Submit Button */}
         <Button
           type="submit"
           className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          disabled={loading}
         >
           {loading ? <Loader2 className="animate-spin" size={20} /> : "Sign In"}
         </Button>
 
-        {/* Forgot + Signup Links */}
         <div className="text-center text-sm text-gray-600 space-y-1">
           <p>
             Forgot{" "}

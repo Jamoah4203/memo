@@ -1,29 +1,29 @@
-import axios from "axios";
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
 
-// Use a fallback for dev only (never ship localhost in production!)
+// 🌐 Base URL fallback for local dev
 const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5137";
 
 const instance = axios.create({
   baseURL: `${baseURL}/api/`,
-  withCredentials: true, // Optional: depends on if you're doing cookie auth
+  withCredentials: true, // If using cookie-based auth; fine to leave true for safety
 });
 
-// 🛡️ Attach access token if present
+// 🔐 Attach access token from localStorage to headers
 instance.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const access = localStorage.getItem("access");
-    if (access) {
+    if (access && config.headers) {
       config.headers.Authorization = `Bearer ${access}`;
     }
   }
   return config;
 });
 
-// 🔁 Auto-refresh tokens on 401
+// ♻️ Handle 401 and attempt token refresh
 instance.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  async (error: AxiosError) => {
+    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
     if (
       error.response?.status === 401 &&
@@ -33,26 +33,26 @@ instance.interceptors.response.use(
       originalRequest._retry = true;
 
       const refresh = localStorage.getItem("refresh");
-
-      if (refresh) {
-        try {
-          const res = await instance.post("/auth/refresh-token", { refresh });
-          const newAccess = res.data.access;
-
-          localStorage.setItem("access", newAccess);
-          originalRequest.headers.Authorization = `Bearer ${newAccess}`;
-
-          return instance(originalRequest);
-        } catch (refreshErr) {
-          localStorage.clear();
-          window.location.href = "/login"; // Redirect user to login
-          return Promise.reject(refreshErr);
-        }
-      } else {
-        // No refresh token, force logout
+      if (!refresh) {
         localStorage.clear();
         window.location.href = "/login";
         return Promise.reject(error);
+      }
+
+      try {
+        const res = await instance.post("/auth/refresh-token", { refresh });
+        const newAccess = res.data.access;
+
+        localStorage.setItem("access", newAccess);
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+        }
+
+        return instance(originalRequest); // 🔁 Retry original request
+      } catch (refreshErr) {
+        localStorage.clear();
+        window.location.href = "/login";
+        return Promise.reject(refreshErr);
       }
     }
 

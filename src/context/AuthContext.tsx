@@ -27,10 +27,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.setItem("refresh", refresh);
       setAccessToken(access);
 
-      await fetchUser();
-      router.push("/dashboard"); // redirect to homepage
-    } catch (err) {
-      console.error("Login failed", err);
+      await fetchUser(access);
+      router.push("/dashboard");
+    } catch (err: any) {
+      const message = err?.response?.data?.detail || "Invalid credentials";
+      console.error("Login failed:", message);
+      throw new Error(message);
     }
   };
 
@@ -41,41 +43,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     router.push("/");
   };
 
-  const fetchUser = async () => {
+  const fetchUser = async (token?: string) => {
     try {
+      const authToken = token || accessToken;
+      if (!authToken) return;
+
       const res = await axios.get("/users/profile/me", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access")}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
+
       setUser(res.data);
     } catch (err) {
-      console.error("User fetch failed", err);
+      console.error("User fetch failed:", err);
     }
   };
 
   const refreshAccessToken = async () => {
+    const refresh = localStorage.getItem("refresh");
+    if (!refresh) {
+      console.warn("No refresh token found");
+      logout();
+      return;
+    }
+
     try {
-      const res = await axios.post("/auth/refresh-token", {
-        refresh: localStorage.getItem("refresh"),
-      });
+      const res = await axios.post("/auth/refresh-token", { refresh });
       const { access } = res.data;
       localStorage.setItem("access", access);
       setAccessToken(access);
       return access;
     } catch (err) {
+      console.error("Token refresh failed:", err);
       logout();
     }
   };
 
   useEffect(() => {
     const init = async () => {
-      const token = localStorage.getItem("access");
-      if (token) {
-        setAccessToken(token);
-        await fetchUser();
+      const access = localStorage.getItem("access");
+
+      if (access) {
+        setAccessToken(access);
+        await fetchUser(access);
       }
     };
+
     init();
   }, []);
 
