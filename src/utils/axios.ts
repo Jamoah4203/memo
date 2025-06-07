@@ -5,7 +5,7 @@ const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5137";
 
 const instance = axios.create({
   baseURL: `${baseURL}/api/`,
-  withCredentials: true, // If using cookie-based auth; fine to leave true for safety
+  withCredentials: false, // If using cookie-based auth; fine to leave true for safety
 });
 
 // 🔐 Attach access token from localStorage to headers
