@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
+  // 🔐 Login function
   const login = async (email: string, password: string) => {
     try {
       const res = await axios.post("/auth/login", { email, password });
@@ -27,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.setItem("refresh", refresh);
       setAccessToken(access);
 
-      await fetchUser(access);
+      await fetchUser();
       router.push("/dashboard");
     } catch (err: any) {
       const message = err?.response?.data?.detail || "Invalid credentials";
@@ -36,61 +37,69 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // 🚪 Logout
   const logout = () => {
-    localStorage.clear();
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
     setUser(null);
     setAccessToken(null);
     router.push("/");
   };
 
-  const fetchUser = async (token?: string) => {
+  // 👤 Fetch user profile
+  const fetchUser = async () => {
     try {
-      const authToken = token || accessToken;
-      if (!authToken) return;
-
-      const res = await axios.get("/users/profile/me", {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
+      const res = await axios.get("/users/profile/me");
       setUser(res.data);
-    } catch (err) {
-      console.error("User fetch failed:", err);
+    } catch (err: any) {
+      console.warn("Fetching user failed, trying refresh...");
+      const newAccess = await refreshAccessToken();
+      if (newAccess) {
+        try {
+          const res = await axios.get("/users/profile/me");
+          setUser(res.data);
+        } catch (err2) {
+          console.error("Retry failed after token refresh:", err2);
+          logout();
+        }
+      } else {
+        logout();
+      }
     }
   };
 
+  // ♻️ Refresh access token
   const refreshAccessToken = async () => {
     const refresh = localStorage.getItem("refresh");
-    if (!refresh) {
-      console.warn("No refresh token found");
-      logout();
-      return;
-    }
+    if (!refresh) return null;
 
     try {
       const res = await axios.post("/auth/refresh-token", { refresh });
-      const { access } = res.data;
-      localStorage.setItem("access", access);
-      setAccessToken(access);
-      return access;
+      const newAccess = res.data.access;
+      localStorage.setItem("access", newAccess);
+      setAccessToken(newAccess);
+      return newAccess;
     } catch (err) {
       console.error("Token refresh failed:", err);
-      logout();
+      return null;
     }
   };
 
+  // 🧠 Init on mount
   useEffect(() => {
-    const init = async () => {
+    const initialize = async () => {
       const access = localStorage.getItem("access");
+      const refresh = localStorage.getItem("refresh");
 
-      if (access) {
+      if (access && refresh) {
         setAccessToken(access);
-        await fetchUser(access);
+        await fetchUser();
+      } else {
+        logout(); // Clean up if one is missing
       }
     };
 
-    init();
+    initialize();
   }, []);
 
   return (
