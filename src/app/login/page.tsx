@@ -2,15 +2,13 @@
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Eye, EyeOff, CheckCircle } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const router = useRouter();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -27,12 +25,8 @@ export default function LoginPage() {
     setFeedback({ error: "", success: false });
 
     try {
-      await login(form.email, form.password);
+      await login(form.email, form.password); // 🚫 Do not redirect here
       setFeedback({ error: "", success: true });
-
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1000);
     } catch (err: any) {
       const msg =
         err?.response?.data?.detail || err?.message || "Login failed. Try again.";
@@ -63,7 +57,6 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Email */}
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-medium">
             Email
@@ -78,7 +71,6 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* Password */}
         <div className="space-y-2">
           <label htmlFor="password" className="text-sm font-medium">
             Password

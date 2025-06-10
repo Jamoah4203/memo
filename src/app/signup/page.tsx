@@ -25,7 +25,8 @@ export default function SignupPage() {
   const [success, setSuccess] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
     setError("");
     setSuccess("");
   };
@@ -33,16 +34,14 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { password, confirmPassword } = form;
+    const { firstName, lastName, email, password, confirmPassword } = form;
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
+      return setError("Passwords do not match.");
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
+      return setError("Password must be at least 6 characters.");
     }
 
     setLoading(true);
@@ -50,14 +49,28 @@ export default function SignupPage() {
     setSuccess("");
 
     try {
-      await axios.post("auth/register/", form);
+      const response = await axios.post("/auth/register", {
+        firstName,
+        lastName,
+        email,
+        password,
+        confirmPassword,
+      });
+
+      const { accessToken, refreshToken, user } = response.data.data;
+
+      localStorage.setItem("access", accessToken);
+      localStorage.setItem("refresh", refreshToken);
+      localStorage.setItem("user", JSON.stringify(user));
 
       setSuccess("Account created successfully! Redirecting...");
       setTimeout(() => router.push("/login"), 1500);
     } catch (err: any) {
-      const errorMessage =
-        err?.response?.data?.detail || err?.message || "Signup failed";
-      setError(errorMessage);
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data?.detail ||
+        "Signup failed. Please try again.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -90,9 +103,9 @@ export default function SignupPage() {
           <Input
             id="firstName"
             name="firstName"
-            placeholder="John"
             value={form.firstName}
             onChange={handleChange}
+            placeholder="John"
             required
           />
         </div>
@@ -104,9 +117,9 @@ export default function SignupPage() {
           <Input
             id="lastName"
             name="lastName"
-            placeholder="Doe"
             value={form.lastName}
             onChange={handleChange}
+            placeholder="Doe"
             required
           />
         </div>
@@ -119,9 +132,9 @@ export default function SignupPage() {
             id="email"
             name="email"
             type="email"
-            placeholder="email@example.com"
             value={form.email}
             onChange={handleChange}
+            placeholder="email@example.com"
             required
           />
         </div>
@@ -135,9 +148,9 @@ export default function SignupPage() {
               id="password"
               name="password"
               type={showPassword ? "text" : "password"}
-              placeholder="Password"
               value={form.password}
               onChange={handleChange}
+              placeholder="Password"
               required
             />
             <button
@@ -159,9 +172,9 @@ export default function SignupPage() {
             id="confirmPassword"
             name="confirmPassword"
             type={showPassword ? "text" : "password"}
-            placeholder="Confirm Password"
             value={form.confirmPassword}
             onChange={handleChange}
+            placeholder="Confirm Password"
             required
           />
         </div>
@@ -191,3 +204,5 @@ export default function SignupPage() {
     </div>
   );
 }
+// This code defines a signup page for a web application using React and Next.js.
+// It includes a form for users to enter their first name, last name, email, password, and confirm password.
